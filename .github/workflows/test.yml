@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        version: "latest"
+    
+    - name: Set up Python
+      run: uv python install 3.10
+    
+    - name: Install dependencies
+      run: uv sync
+    
+    - name: Install package in development mode
+      run: uv pip install -e .
+    
+    - name: Run tests
+      run: uv run pytest --tb=short -v
+    
+    - name: Run tests with coverage (optional)
+      run: |
+        uv add --dev pytest-cov
+        uv run pytest --cov=AgentOrchestration --cov-report=term-missing
