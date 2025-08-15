@@ -50,7 +50,7 @@ class Rollout:
                 role = "user"
             elif message.type == MessageType.MESSAGE:
                 role = "user"
-            elif message.type == MessageType.OUTPUT:
+            elif message.type == MessageType.MODEL:
                 role = "assistant"
             else:
                 role = "user"  # default fallback
@@ -67,7 +67,7 @@ class Rollout:
         output = ""
 
         for formatted_messages in self.format_conversation():
-            output += f"{formatted_messages.role}: {formatted_messages.content}"
+            output += f"{formatted_messages['role']}: {formatted_messages['content']}"
         
         return output
     

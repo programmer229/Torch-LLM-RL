@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from AgentOrchestration.utils.message import Rollouts
+from AgentOrchestration.utils.message import Rollout
 
 class Trainer(ABC):
 
@@ -14,7 +14,7 @@ class Trainer(ABC):
     
 
     
-    def calculate_loss(self, rollouts: List[Rollouts], agent_model, ref_model, kl_model):
+def calculate_loss(self, rollouts: List[Rollout], agent_model, ref_model, kl_model):
         pass
 
     
