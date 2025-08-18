@@ -24,7 +24,7 @@ class ToolUseEnv(Env):
     
     def get_sys_prompt(self) -> Message:
         
-        tool_explanation = self.ToolManger.get_model_tool_explanation() if self.ToolManger else ""
+        
 
         sys_prompt = self.custom_sys_prompt + tool_explanation     
         message = Message(content=sys_prompt, type=Message.SYSTEM)

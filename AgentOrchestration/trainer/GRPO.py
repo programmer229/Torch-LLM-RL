@@ -61,7 +61,7 @@ class GRPO(Trainer):
         backprop_indices = defaultdict(list)
         for rollout_idx, rollout in enumerate(rollouts):
             token_pos = 0
-            for msg in rollout.messages:
+            for msg in rollout:
                 msg_tokens = self.tokenizer.encode(msg.content)
                 if msg.type == MessageType.MODEL:
                     # Store (token_start, token_end) for each MODEL message in this rollout

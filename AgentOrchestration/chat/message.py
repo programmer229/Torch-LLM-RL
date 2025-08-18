@@ -34,7 +34,7 @@ class Rollout:
     def __len__(self):
         return len(self._messages)
     
-    def __getitem__(self, index)
+    def __getitem__(self, index):
         return self._messages[index]
 
 

@@ -18,7 +18,7 @@ class BoxedReward:
         for i, rollout in enumerate(rollouts):
             # Extract content from boxed notation in MODEL messages
             boxed_content = None
-            for message in rollout.messages:
+            for message in rollout:
                 if message.type == MessageType.MODEL:
                     # Look for \boxed{...} pattern
                     match = re.search(r'\\boxed\{([^}]*)\}', message.content)
