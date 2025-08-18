@@ -27,6 +27,8 @@ class Message:
 class Rollout:
     def __init__(self):
         self._messages: List[Message] = []
+        self.is_complete = False
+        self.reward = None
         
     
     def __len__(self):
@@ -34,7 +36,7 @@ class Rollout:
     
     def __getitem__(self, index)
         return self._messages[index]
-        
+
 
     def add_message(self, message: Message):
         """Add a message to the conversation."""
