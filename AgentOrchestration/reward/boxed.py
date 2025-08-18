@@ -1,16 +1,19 @@
+
+import torch
+from torch import TensorType
 from typing import List
 import re
 
-from AgentOrchestration.utils.message import Rollout, MessageType
+from AgentOrchestration.chat.message import Rollout, MessageType
 
 
 
 class BoxedReward:
 
-    def __init__(self, format_reward) -> None:
+    def __init__(self, format_reward = 0) -> None:
         self.format_reward = format_reward
 
-    def __call__(self, rollouts: List[Rollout], ground_truth: List[str]) -> List[float]:
+    def __call__(self, rollouts: List[Rollout], ground_truth: List[str]) -> TensorType:
         rewards = []
         for i, rollout in enumerate(rollouts):
             # Extract content from boxed notation in MODEL messages
@@ -43,7 +46,7 @@ class BoxedReward:
             else:
                 rewards.append(0.0)
 
-        return rewards
+        return torch.tensor(rewards)
 
 
 

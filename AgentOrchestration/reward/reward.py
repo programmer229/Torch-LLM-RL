@@ -2,7 +2,7 @@
 
 from typing import Protocol, List
 
-from AgentOrchestration.utils.message import Rollout
+from AgentOrchestration.chat.message import Rollout
 
 class Reward(Protocol):
 

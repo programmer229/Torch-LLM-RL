@@ -8,12 +8,13 @@
 
 from pickletools import optimize
 from datasets import load_dataset
+from torch.nn import parameter
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
 
-from AgentOrchestration.utils.message import Rollout, Message, MessageType
+from AgentOrchestration.chat.message import Rollout, Message, MessageType
 from AgentOrchestration.trainer.GRPO import GRPO
-
+from AgentOrchestration.reward.boxed import BoxedReward
 
 
 # Load pre-trained model and tokenizer
@@ -43,7 +44,10 @@ rollout.add_message(message)
 
 
 rollouts = [rollout]*8  # List of Rollout objects, not tensor
-rewards = torch.randn(8)
+
+groundth_truth = torch.ones(8)
+
+rewards = BoxedReward()(rollouts, groundth_truth)
 
 print(f"Number of rollouts: {len(rollouts)}")
 print(f"First rollout messages: {len(rollouts[0].messages)}")
@@ -51,34 +55,12 @@ print(f"First rollout messages: {len(rollouts[0].messages)}")
 #Train
 trainer = GRPO(model = model, tokenizer= tokenizer, eps = 0.01)
 # reward = 
-# optimizer= torch.Adam()
+optimizer= torch.optim.Adam(model.parameters())
 loss = trainer.calculate_loss(rollouts=rollouts, rewards=rewards)
-loss.backward()  # Fixed typo: backward() not backwards()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
+optimizer.zero_grad()
+loss.backward()  
+optimizer.step()
 
 
 

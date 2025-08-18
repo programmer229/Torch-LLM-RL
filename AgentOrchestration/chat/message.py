@@ -8,7 +8,6 @@ from enum import Enum
 
 class MessageType(Enum):
     SYSTEM = "system"
-    PROMPT = "prompt"
     MESSAGE = "user"
     MODEL = "assistant"
 
@@ -27,12 +26,19 @@ class Message:
     
 class Rollout:
     def __init__(self):
-        self.messages: List[Message] = []
+        self._messages: List[Message] = []
+        
+    
+    def __len__(self):
+        return len(self._messages)
+    
+    def __getitem__(self, index)
+        return self._messages[index]
         
 
-    def add_message(self, message: Message, ):
+    def add_message(self, message: Message):
         """Add a message to the conversation."""
-        self.messages.append(message)
+        self._messages.append(message)
 
     def format_conversation(self) -> List[dict]:
         """
@@ -42,12 +48,10 @@ class Rollout:
         """
         formatted_messages = []
         
-        for message in self.messages:
+        for message in self._messages:
             # Map MessageType to chat roles
             if message.type == MessageType.SYSTEM:
                 role = "system"
-            elif message.type == MessageType.PROMPT:
-                role = "user"
             elif message.type == MessageType.MESSAGE:
                 role = "user"
             elif message.type == MessageType.MODEL:

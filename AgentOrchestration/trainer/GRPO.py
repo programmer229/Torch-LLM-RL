@@ -3,10 +3,10 @@ import copy
 from abc import ABC, abstractmethod
 import token
 from typing import List
-
+from collections import defaultdict
 
 from .trainer import Trainer
-from AgentOrchestration.utils.message import Rollout, MessageType
+from AgentOrchestration.chat.message import Rollout, MessageType
 import torch
 
 class GRPO(Trainer):
@@ -58,14 +58,14 @@ class GRPO(Trainer):
         
         
         # Get indices of MODEL message tokens for backprop only
-        backprop_indices = []
+        backprop_indices = defaultdict(list)
         for rollout_idx, rollout in enumerate(rollouts):
             token_pos = 0
             for msg in rollout.messages:
                 msg_tokens = self.tokenizer.encode(msg.content)
                 if msg.type == MessageType.MODEL:
-                    # Store (batch_idx, token_start, token_end) for MODEL messages
-                    backprop_indices.append((rollout_idx, token_pos, token_pos + len(msg_tokens)))
+                    # Store (token_start, token_end) for each MODEL message in this rollout
+                    backprop_indices[rollout_idx].append((token_pos, token_pos + len(msg_tokens)))
                 token_pos += len(msg_tokens)
         
         
@@ -85,24 +85,34 @@ class GRPO(Trainer):
         
         ratios = self._calculate_prob_ratios(inputs_ids)
         
-        # Calculate loss per rollout, then average across rollouts
+        # Calculate loss per rollout, handling multiple MODEL messages per rollout
         rollout_losses = []
         
-        for i, (batch_idx, start_pos, end_pos) in enumerate(backprop_indices):
-            # Get ratios for this rollout's MODEL tokens
-            rollout_ratios = ratios[batch_idx, start_pos:end_pos]
-            rollout_advantage = advantage[i]  # Advantage for this rollout
+        for rollout_idx in range(len(rollouts)):
+            rollout_advantage = advantage[rollout_idx]
+            model_message_losses = []
             
-            if len(rollout_ratios) > 0:
-                clipped_ratios = torch.clip(rollout_ratios, 1-self.eps, 1+self.eps)
-                
-                # GRPO/PPO loss for this rollout
-                loss_unclipped = rollout_advantage * rollout_ratios
-                loss_clipped = rollout_advantage * clipped_ratios
-                loss_per_token = torch.min(loss_unclipped, loss_clipped)
-                
-                # Average loss over tokens in this rollout
-                rollout_loss = loss_per_token.mean()
+            # Get all MODEL message token ranges for this rollout
+            if rollout_idx in backprop_indices:
+                for start_pos, end_pos in backprop_indices[rollout_idx]:
+                    # Get ratios for this MODEL message's tokens
+                    message_ratios = ratios[rollout_idx, start_pos:end_pos]
+                    
+                    if len(message_ratios) > 0:
+                        clipped_ratios = torch.clip(message_ratios, 1-self.eps, 1+self.eps)
+                        
+                        # GRPO/PPO loss for this MODEL message
+                        loss_unclipped = rollout_advantage * message_ratios
+                        loss_clipped = rollout_advantage * clipped_ratios
+                        loss_per_token = torch.min(loss_unclipped, loss_clipped)
+                        
+                        # Average loss over tokens in this MODEL message
+                        message_loss = loss_per_token.mean()
+                        model_message_losses.append(message_loss)
+            
+            # Average loss over all MODEL messages in this rollout
+            if model_message_losses:
+                rollout_loss = torch.stack(model_message_losses).mean()
                 rollout_losses.append(rollout_loss)
         
         if rollout_losses:

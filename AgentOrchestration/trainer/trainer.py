@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from AgentOrchestration.utils.message import Rollout
+from AgentOrchestration.chat.message import Rollout
 
 class Trainer(ABC):
 

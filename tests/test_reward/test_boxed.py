@@ -1,8 +1,9 @@
 
 
+import torch
 
 from AgentOrchestration.reward.boxed import BoxedReward
-from AgentOrchestration.utils.message import Message, Rollout, MessageType
+from AgentOrchestration.chat.message import Message, Rollout, MessageType
 
 
 def test_no_box():
@@ -11,7 +12,7 @@ def test_no_box():
     rollout.add_message(message)
     reward_func = BoxedReward(format_reward=0.1)
     reward = reward_func(rollouts=[rollout], ground_truth=[2])
-    assert reward == [0.0]
+    assert torch.isclose(reward, torch.tensor([0.0]))
 
 def test_box_wrong_solution():
     message = Message("\\boxed{test}", MessageType.MODEL)
@@ -19,7 +20,7 @@ def test_box_wrong_solution():
     rollout.add_message(message)
     reward_func = BoxedReward(format_reward=0.1)
     reward = reward_func(rollouts=[rollout], ground_truth=[2])
-    assert reward == [0.1]
+    assert torch.isclose(reward, torch.tensor([0.1]))
 
 def test_box_solution_str():
     message = Message("\\boxed{test}", MessageType.MODEL)
@@ -27,7 +28,7 @@ def test_box_solution_str():
     rollout.add_message(message)
     reward_func = BoxedReward(format_reward=0.1)
     reward = reward_func(rollouts=[rollout], ground_truth=["test"])
-    assert reward == [1.0]
+    assert torch.isclose(reward, torch.tensor([1.0]))
 
 
 def test_box_solution_numeric():
@@ -36,7 +37,7 @@ def test_box_solution_numeric():
     rollout.add_message(message)
     reward_func = BoxedReward(format_reward=0.1)
     reward = reward_func(rollouts=[rollout], ground_truth=[1.234])
-    assert reward == [1.0]
+    assert torch.isclose(reward, torch.tensor([1.0]))
 
 def test_box_solution_numeric_sig_figs():
     message = Message("\\boxed{1.0}", MessageType.MODEL)
@@ -44,4 +45,4 @@ def test_box_solution_numeric_sig_figs():
     rollout.add_message(message)
     reward_func = BoxedReward(format_reward=0.1)
     reward = reward_func(rollouts=[rollout], ground_truth=[1])
-    assert reward == [1.0]
+    assert torch.isclose(reward, torch.tensor([1.0]))
