@@ -12,26 +12,24 @@ from torch.nn import parameter
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
 from copy import deepcopy
-from tqdm import tqdm
-import random
 
-from AgentOrchestration.model.generate import ModelGenerate
-from AgentOrchestration.env.QASolve import QASolverEnv
-from AgentOrchestration.chat.message import Rollout, Message, MessageType
-from AgentOrchestration.trainer.GRPO import GRPO
-from AgentOrchestration.reward.boxed import BoxedReward
-from AgentOrchestration.dataset.dataset import Dataset
+from SimpleTorchLLMRL.model.generate import ModelGenerate
+from SimpleTorchLLMRL.env.QASolve import QASolverEnv
+from SimpleTorchLLMRL.chat.message import Rollout, Message, MessageType
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.dataset.dataset import Dataset
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
-# Model setup
 model_name = "gpt2"  # or "gpt2-medium", "gpt2-large", "gpt2-xl"
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 tokenizer.pad_token = tokenizer.eos_token  # Set pad token for GPT2
 model = GPT2LMHeadModel.from_pretrained(model_name)
 
-# Dataset loader
+
+#Dataset loader
 dataset = Dataset.from_huggingface(
             dataset_name="trl-lib/tldr",
             question_col="prompt",
@@ -39,127 +37,42 @@ dataset = Dataset.from_huggingface(
             split = "train"
             )
 
-# Training components
-trainer = GRPO(model=model, tokenizer=tokenizer, eps=0.01)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+
+#Train
+trainer = GRPO(model = model, tokenizer= tokenizer, eps = 0.01)
+optimizer = torch.optim.Adam(model.parameters())
+
 reward = BoxedReward()
 
 env = QASolverEnv(
     reward=reward,
-    dataset=dataset,
-    custom_sys_prompt="Solve the following Math problems:"
+    dataset = dataset,
+    custom_sys_prompt = "Solve the following Math problems:"
 )
 
-model_generator = ModelGenerate(
-    model=model, 
-    tokenizer=tokenizer,
-    max_new_tokens=100,
-    temperature=0.7
-)
+model_generater = ModelGenerate(
+                    model = model, 
+                    tokenizer= tokenizer)
 
-# Training hyperparameters
 batch_size = 8
-num_epochs = 3
-save_every = 100  # Save model every N steps
 
-# Training loop
-step = 0
-total_loss = 0
-running_loss = 0
 
-print(f"Starting training for {num_epochs} epochs...")
-print(f"Dataset size: {len(dataset)}")
-print(f"Batch size: {batch_size}")
+rollout = Rollout()
 
-for epoch in range(num_epochs):
-    print(f"\n=== Epoch {epoch + 1}/{num_epochs} ===")
-    
-    # Shuffle dataset indices for each epoch
-    dataset_indices = list(range(len(dataset)))
-    random.shuffle(dataset_indices)
-    
-    # Create batches
-    num_batches = len(dataset_indices) // batch_size
-    epoch_loss = 0
-    
-    with tqdm(range(num_batches), desc=f"Epoch {epoch + 1}") as pbar:
-        for batch_idx in pbar:
-            # Get batch indices
-            start_idx = batch_idx * batch_size
-            end_idx = min(start_idx + batch_size, len(dataset_indices))
-            batch_indices = dataset_indices[start_idx:end_idx]
-            
-            # Generate rollouts for this batch
-            rollouts = []
-            ground_truths = []
-            
-            for idx in batch_indices:
-                data_item = dataset[idx]
-                question = data_item["question"]
-                ground_truth = data_item["solution"]
-                
-                # Create rollout
-                rollout = Rollout()
-                initial_messages, state = env.setup(question, ground_truth)
-                rollout.add_messages(*initial_messages)
-                
-                # Generate model response
-                model_response = model_generator.rollout_generate_response(rollout)
-                rollout.add_messages(model_response)
-                
-                rollouts.append(rollout)
-                ground_truths.append(ground_truth)
-            
-            # Calculate rewards
-            rewards = reward(rollouts, ground_truths)
-            
-            # Calculate loss
-            loss = trainer.calculate_loss(rollouts=rollouts, rewards=rewards)
-            
-            # Backward pass
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            
-            # Update metrics
-            step += 1
-            batch_loss = loss.item()
-            total_loss += batch_loss
-            running_loss += batch_loss
-            epoch_loss += batch_loss
-            
-            # Update progress bar
-            pbar.set_postfix({
-                'loss': f'{batch_loss:.4f}',
-                'avg_loss': f'{running_loss / step:.4f}',
-                'rewards': f'{rewards.mean().item():.3f}'
-            })
-            
-            # Save model checkpoint
-            if step % save_every == 0:
-                checkpoint_path = f"model_checkpoint_step_{step}.pt"
-                torch.save({
-                    'step': step,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'loss': total_loss / step,
-                }, checkpoint_path)
-                print(f"\nSaved checkpoint: {checkpoint_path}")
-    
-    # Epoch summary
-    avg_epoch_loss = epoch_loss / num_batches
-    print(f"Epoch {epoch + 1} completed. Average loss: {avg_epoch_loss:.4f}")
+quesiton = "2+2"
+ground_truth  = "4"
 
-# Final save
-final_model_path = f"final_model_epoch_{num_epochs}.pt"
-torch.save({
-    'model_state_dict': model.state_dict(),
-    'optimizer_state_dict': optimizer.state_dict(),
-    'final_loss': total_loss / step,
-    'total_steps': step
-}, final_model_path)
+initial_message, state = env.setup(quesiton, ground_truth)
+rollout.add_messages(*initial_message)
 
-print(f"\nTraining completed!")
-print(f"Total steps: {step}")
-print(f"Final average loss: {total_loss / step:.4f}")
-print(f"Final model saved: {final_model_path}")
+model_response = model_generater.rollout_generate_response(rollout)
+rollout.add_messages(model_response)
+
+rollouts = [rollout]
+rewards = reward(rollouts, [ground_truth])
+
+loss = trainer.calculate_loss(rollouts=rollouts, rewards=rewards)
+
+optimizer.zero_grad()
+loss.backward() 
+optimizer.step()

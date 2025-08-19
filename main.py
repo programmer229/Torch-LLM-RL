@@ -15,12 +15,12 @@ from copy import deepcopy
 from tqdm import tqdm
 import random
 
-from AgentOrchestration.model.generate import ModelGenerate
-from AgentOrchestration.env.QASolve import QASolverEnv
-from AgentOrchestration.chat.message import Rollout, Message, MessageType
-from AgentOrchestration.trainer.GRPO import GRPO
-from AgentOrchestration.reward.boxed import BoxedReward
-from AgentOrchestration.dataset.dataset import Dataset
+from SimpleTorchLLMRL.model.generate import ModelGenerate
+from SimpleTorchLLMRL.env.QASolve import QASolverEnv
+from SimpleTorchLLMRL.chat.message import Rollout, Message, MessageType
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.reward.length import length_penalty
+from SimpleTorchLLMRL.dataset.dataset import Dataset
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
@@ -42,7 +42,7 @@ dataset = Dataset.from_huggingface(
 # Training components
 trainer = GRPO(model=model, tokenizer=tokenizer, eps=0.01)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
-reward = BoxedReward()
+reward = length_penalty
 
 env = QASolverEnv(
     custom_sys_prompt="Solve the following Math problems:"
@@ -110,6 +110,7 @@ for epoch in range(num_epochs):
             
             # Calculate rewards
             rewards = reward(rollouts, ground_truths)
+            
             
             # Calculate loss
             loss = trainer.calculate_loss(rollouts=rollouts, rewards=rewards)

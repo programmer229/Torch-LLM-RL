@@ -4,7 +4,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
 import pytest
 
-from AgentOrchestration.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
 
 # Load pre-trained model and tokenizer
 

@@ -6,7 +6,7 @@ from typing import List
 from collections import defaultdict
 
 from .trainer import Trainer
-from AgentOrchestration.chat.message import Rollout, MessageType
+from SimpleTorchLLMRL.chat.message import Rollout, MessageType
 import torch
 
 class GRPO(Trainer):

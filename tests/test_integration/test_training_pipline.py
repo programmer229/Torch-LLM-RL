@@ -8,9 +8,9 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 import torch
 import pytest
 
-from AgentOrchestration.chat.message import Rollout, Message, MessageType
-from AgentOrchestration.trainer.GRPO import GRPO
-from AgentOrchestration.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.chat.message import Rollout, Message, MessageType
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
 
 
 

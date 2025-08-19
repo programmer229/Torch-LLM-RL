@@ -1,5 +1,5 @@
 """
-Unit tests for AgentOrchestration.model.generate module.
+Unit tests for SimpleTorchLLMRL.model.generate module.
 
 Tests cover ModelGenerate class functionality including generation methods,
 rollout processing, and batch operations.
@@ -10,8 +10,8 @@ import torch
 from unittest.mock import Mock, MagicMock, patch
 from typing import List
 
-from AgentOrchestration.model.generate import ModelGenerate
-from AgentOrchestration.chat.message import Message, MessageType, Rollout
+from SimpleTorchLLMRL.model.generate import ModelGenerate
+from SimpleTorchLLMRL.chat.message import Message, MessageType, Rollout
 
 
 class TestModelGenerate:

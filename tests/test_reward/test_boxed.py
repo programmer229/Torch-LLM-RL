@@ -2,8 +2,8 @@
 
 import torch
 
-from AgentOrchestration.reward.boxed import BoxedReward
-from AgentOrchestration.chat.message import Message, Rollout, MessageType
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.chat.message import Message, Rollout, MessageType
 
 
 def test_no_box():

@@ -1,5 +1,5 @@
 """
-Unit tests for AgentOrchestration.tools.tool module.
+Unit tests for SimpleTorchLLMRL.tools.tool module.
 
 Tests cover the abstract Tool base class functionality and error conditions.
 """
@@ -9,7 +9,7 @@ from abc import ABC
 from typing import Any
 from unittest.mock import Mock
 
-from AgentOrchestration.tools.tool import Tool
+from SimpleTorchLLMRL.tools.tool import Tool
 
 
 class ConcreteTool(Tool):

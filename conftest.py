@@ -7,8 +7,8 @@ import torch
 from unittest.mock import Mock, MagicMock
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
-from AgentOrchestration.chat.message import Message, MessageType, Rollout
-from AgentOrchestration.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.chat.message import Message, MessageType, Rollout
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
 
 
 @pytest.fixture

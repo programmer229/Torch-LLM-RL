@@ -1,5 +1,5 @@
 """
-Unit tests for AgentOrchestration.chat.message module.
+Unit tests for SimpleTorchLLMRL.chat.message module.
 
 Tests cover Message dataclass, MessageType enum, and Rollout class functionality.
 """
@@ -7,7 +7,7 @@ Tests cover Message dataclass, MessageType enum, and Rollout class functionality
 import pytest
 from typing import List
 
-from AgentOrchestration.chat.message import Message, MessageType, Rollout
+from SimpleTorchLLMRL.chat.message import Message, MessageType, Rollout
 
 
 class TestMessageType:

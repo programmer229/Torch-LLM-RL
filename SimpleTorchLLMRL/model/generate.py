@@ -1,7 +1,7 @@
 import torch
 from typing import List, Optional
 
-from AgentOrchestration.chat.message import Rollout, Message, MessageType
+from SimpleTorchLLMRL.chat.message import Rollout, Message, MessageType
 
 
 class ModelGenerate():

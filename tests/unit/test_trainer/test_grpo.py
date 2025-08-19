@@ -1,5 +1,5 @@
 """
-Unit tests for AgentOrchestration.trainer.GRPO module.
+Unit tests for SimpleTorchLLMRL.trainer.GRPO module.
 
 Tests cover GRPO trainer functionality including advantage calculation,
 probability ratios, loss calculation, and training integration.
@@ -11,8 +11,8 @@ import copy
 from unittest.mock import Mock, MagicMock, patch
 from typing import List
 
-from AgentOrchestration.trainer.GRPO import GRPO
-from AgentOrchestration.chat.message import Message, MessageType, Rollout
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.chat.message import Message, MessageType, Rollout
 
 
 class TestGRPO:

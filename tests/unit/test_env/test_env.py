@@ -1,5 +1,5 @@
 """
-Unit tests for AgentOrchestration.env.env module.
+Unit tests for SimpleTorchLLMRL.env.env module.
 
 Tests cover the abstract Env base class functionality and error conditions.
 """
@@ -8,8 +8,8 @@ import pytest
 from abc import ABC
 from unittest.mock import Mock
 
-from AgentOrchestration.env.env import Env
-from AgentOrchestration.chat.message import Message, MessageType, Rollout
+from SimpleTorchLLMRL.env.env import Env
+from SimpleTorchLLMRL.chat.message import Message, MessageType, Rollout
 
 
 class ConcreteEnv(Env):

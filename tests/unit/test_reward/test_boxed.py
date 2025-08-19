@@ -1,5 +1,5 @@
 """
-Unit tests for AgentOrchestration.reward.boxed module.
+Unit tests for SimpleTorchLLMRL.reward.boxed module.
 
 Tests cover BoxedReward class functionality including reward calculation,
 boxed notation parsing, and different data type comparisons.
@@ -9,8 +9,8 @@ import pytest
 import torch
 from typing import List
 
-from AgentOrchestration.chat.message import Message, MessageType, Rollout
-from AgentOrchestration.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.chat.message import Message, MessageType, Rollout
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
 
 
 class TestBoxedReward:
