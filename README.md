@@ -1,10 +1,10 @@
-# Simple-Torch-LLM-RL
+# SimpleTorchLLMRL
 
 A PyTorch-native reinforcement learning library for training language models that embraces PyTorch's design philosophy while providing powerful abstractions for complex RL scenarios.
 
 ## 🎯 Philosophy
 
-Unlike other RL libraries that abstract away PyTorch, Simple-Torch-LLM-RL is built **with** PyTorch, not **on top of** it. We provide the building blocks you need while letting you maintain full control over your training loop, model architecture, and optimization strategy.
+Unlike other RL libraries that abstract away PyTorch, SimpleTorchLLMRL is built **with** PyTorch, not **on top of** it. We provide the building blocks you need while letting you maintain full control over your training loop, model architecture, and optimization strategy.
 
 ## 🚀 Key Features
 
@@ -20,10 +20,10 @@ Unlike other RL libraries that abstract away PyTorch, Simple-Torch-LLM-RL is bui
 
 ### The Rollout System
 
-At the heart of Simple-Torch-LLM-RL is the **Rollout** - a conversation-like data structure that captures the full interaction between agents, tools, and environments.
+At the heart of SimpleTorchLLMRL is the **Rollout** - a conversation-like data structure that captures the full interaction between agents, tools, and environments.
 
 ```python
-from Simple-Torch-LLM-RL.chat.message import Rollout, Message, MessageType
+from SimpleTorchLLMRL.chat.message import Rollout, Message, MessageType
 
 # Create a rollout to track an interaction
 rollout = Rollout()
@@ -62,7 +62,7 @@ The key insight: **only `MessageType.MODEL` messages contribute to the training 
 
 ### 2. Model Generation
 ```python
-from Simple-Torch-LLM-RL.model.generate import ModelGenerate
+from SimpleTorchLLMRL.model.generate import ModelGenerate
 
 generator = ModelGenerate(
     model=model,
@@ -80,7 +80,7 @@ generator.batch_rollout_generate_response(rollouts)
 
 ### 3. Training with GRPO
 ```python
-from Simple-Torch-LLM-RL.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
 
 trainer = GRPO(
     model=model,
@@ -96,7 +96,7 @@ optimizer.step()
 
 ### 4. Reward Functions
 ```python
-from Simple-Torch-LLM-RL.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
 
 reward_fn = BoxedReward()
 rewards = reward_fn(rollouts, ground_truths)
@@ -104,7 +104,7 @@ rewards = reward_fn(rollouts, ground_truths)
 
 ### 5. Environments
 ```python
-from Simple-Torch-LLM-RL.env.QASolve import QASolverEnv
+from SimpleTorchLLMRL.env.QASolve import QASolverEnv
 
 env = QASolverEnv(custom_sys_prompt="Solve this math problem:")
 initial_messages, state = env.setup(question, answer)
@@ -115,10 +115,10 @@ initial_messages, state = env.setup(question, answer)
 ```python
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from Simple-Torch-LLM-RL.chat.message import Rollout, Message, MessageType
-from Simple-Torch-LLM-RL.model.generate import ModelGenerate
-from Simple-Torch-LLM-RL.trainer.GRPO import GRPO
-from Simple-Torch-LLM-RL.reward.boxed import BoxedReward
+from SimpleTorchLLMRL.chat.message import Rollout, Message, MessageType
+from SimpleTorchLLMRL.model.generate import ModelGenerate
+from SimpleTorchLLMRL.trainer.GRPO import GRPO
+from SimpleTorchLLMRL.reward.boxed import BoxedReward
 
 # Setup model
 model = GPT2LMHeadModel.from_pretrained("gpt2")
@@ -226,7 +226,7 @@ uv run pytest tests/unit/test_chat/ tests/unit/test_reward/ tests/unit/test_trai
 ## 📁 Project Structure
 
 ```
-Simple-Torch-LLM-RL/
+SimpleTorchLLMRL/
 ├── chat/           # Message and rollout system
 ├── env/            # Environment abstractions  
 ├── model/          # Model generation utilities

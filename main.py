@@ -110,7 +110,7 @@ for epoch in range(num_epochs):
             
             # Calculate rewards
             rewards = reward(rollouts, ground_truths)
-            
+            print(rewards)
             
             # Calculate loss
             loss = trainer.calculate_loss(rollouts=rollouts, rewards=rewards)

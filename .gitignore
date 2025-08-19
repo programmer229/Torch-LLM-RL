@@ -179,3 +179,37 @@ test.ipynb
 
 .claude
 .vscode
+
+# ML/AI specific
+*.pt
+*.pth  
+*.ckpt
+*.bin
+model_checkpoint_step_*.pt
+final_trained_model.pt
+wandb/
+logs/
+outputs/
+checkpoints/
+
+# Dataset files
+*.jsonl
+*.tsv
+*.csv
+data/
+datasets/
+
+# Temporary and development files  
+todo.txt
+simple_example.py
+*_fixed.py
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.idea/
+*.swp
+*.swo
+*~
