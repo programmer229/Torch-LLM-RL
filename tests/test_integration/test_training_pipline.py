@@ -27,13 +27,13 @@ def test_rollout_grpo_backprop():
     # Message Rollouts 
     rollout = Rollout()
     message = Message("calculate 2+ 32x =34", type=MessageType.MESSAGE)
-    rollout.add_message(message)
+    rollout.add_messages(message)
     message = Message("Ok I'm going to call calculator <calculator>...</calculator>", type=MessageType.MODEL)
-    rollout.add_message(message)
+    rollout.add_messages(message)
     message = Message("Calculator output x=1", type=MessageType.SYSTEM)
-    rollout.add_message(message)
+    rollout.add_messages(message)
     message = Message("Ohh ok the answer is boxed{x=1}", type=MessageType.MODEL)
-    rollout.add_message(message)
+    rollout.add_messages(message)
 
     rollouts = [rollout]*8
     groundth_truth = torch.ones(8)

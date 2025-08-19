@@ -1,24 +1,26 @@
 
 
-from typing import Optional
+from typing import Optional, List, Tuple
+
 
 from AgentOrchestration.reward import reward
 from .env import Env
 
-from AgentOrchestration.chat.message import Message, MessageType
+from AgentOrchestration.chat.message import Message, MessageType, Rollout
 from AgentOrchestration.reward.reward import Reward
-from AgentOrchestration.tools.tool import ToolManger
+# from AgentOrchestration.tools.tool import ToolManger
+from AgentOrchestration.utils.typing import State
 
 
-class ToolUseEnv(Env):
+class QASolverEnv(Env):
 
 
 
-    def __init__(self, tools, dataset, 
+    def __init__(self, 
+                dataset, 
                 reward: Reward,
-                tools:ToolManger= None,
-                custom_sys_prompt = None,
-                max_turns:int = None) -> None:
+                custom_sys_prompt = None
+                ) -> None:
         super().__init__()
         self.reward = reward
         
@@ -29,29 +31,41 @@ class ToolUseEnv(Env):
         self.ground_truth = None
         
     
-    def get_sys_prompt(self) -> Message:
+    def setup(self, question, ground_truth) -> Tuple[List[Message], State]: 
         
+        sys_prompt = self.custom_sys_prompt
+        sys_message = Message(content=sys_prompt, type=MessageType.SYSTEM)
         
+        state = {}
+        state["question"] = question
+        state["ground_truth"] = ground_truth
+        
+        prompt = Message(content=f"Solve the following. Output Answer in Boxed. {question}",type=MessageType.MESSAGE)
 
-        sys_prompt = self.custom_sys_prompt + tool_explanation     
-        message = Message(content=sys_prompt, type=Message.SYSTEM)
-        return message
+        messages = [sys_message, prompt]
 
-    def get_inital_prompt(self) -> Message: 
+        return (messages, state)
         
-        # self.dataset 
+    # self.dataset 
         #TODO implement the dataset getting
 
-        return message
+        # return message
+
+    def is_complete(self, rollout:Rollout, state: State) -> bool:
+
+        return self._reached_max_turns(rollout, max_turns=1) # single turn
 
 
-    def get_response_to_model(self, rollout: Rollout) -> None: 
-        #TODO This one is complex hey cause we can either return a message or the reward
-            #Maybe we have a property on Rollout is complete and reward int?
-                #adds the new rollout in place is that bad?
-        most_recent_mesaage = rollout[-1]
-        rollout.is_complete = True
-        rollout.reward = reward(model_solution= most_recent_message, ground_truth = self.ground_truth) 
+    def get_env_response(self, rollout:Rollout, state: State) -> Message: 
+        #No response needed for this class
+        pass
+
+
+        
+        
+
+
+
         #ahh this get's complex cause now we have to think about the question assigned. 
         # Now probably makes more sense to have unique env instance for each
         #Right so you have to use some kind of hybrid system so one instance of env per rollout

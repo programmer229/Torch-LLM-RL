@@ -1,0 +1,13 @@
+
+
+
+
+Rethink how we are doing the rollouts
+Have the classes update them is confusing 
+Just have everything return a new message and append to chat
+That's easier and more flexible in future if we do wnat to change how that works 
+Asides form that rought structure seems good
+Make more things stateless - stateless generally good
+Have env return the new state and the message then we can just keep track of ourselves in trainer
+
+

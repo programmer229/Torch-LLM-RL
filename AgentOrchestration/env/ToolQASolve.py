@@ -1,11 +1,11 @@
 
 
-from typing import Optional
+from typing import Optional, List
 from .env import Env
 
 from AgentOrchestration.chat.message import Message, MessageType
 from AgentOrchestration.reward.reward import Reward
-from AgentOrchestration.tools.tool import ToolManger
+from AgentOrchestration.tools.tool import ToolManger, Tool
 
 
 class ToolUseEnv(Env):
@@ -14,11 +14,11 @@ class ToolUseEnv(Env):
 
     def __init__(self, tools, dataset, 
                 reward: Reward,
-                tools:ToolManger= None,
+                tools:List[Tool]= None,
                 custom_sys_prompt = None) -> None:
         super().__init__()
         self.reward = reward
-        
+        self.tool_manager = ToolManger(tools=tools)
         self.dataset = dataset
         self.custom_sys_prompt = ""
     

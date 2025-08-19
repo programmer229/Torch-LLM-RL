@@ -1,9 +1,11 @@
 
 
 from abc import ABC, abstractmethod
+from ast import Tuple
+from typing import List
 
-from AgentOrchestration.chat.message import Message
-
+from AgentOrchestration.chat.message import Message, Rollout
+from AgentOrchestration.utils.typing import State
 
 
 
@@ -11,25 +13,26 @@ class Env(ABC):
 
 
 
-    def __init__(self, 
-        max_turns:int = None) -> None:
-        self.max_truns = None
+    def __init__(self) -> None:
+        pass
+
 
     @abstractmethod
-    def get_sys_prompt(self) -> Message: pass
-    
+    def setup(self) -> Tuple(List[Message], State): pass
 
-    @abstractmethod
-    def get_inital_prompt(self) -> Message: pass
         
     @abstractmethod
-    def get_response_to_model(self) -> Message: pass
+    def get_env_response(self, rollout: Rollout, state: State) -> Message: pass
 
 
-    def _over_max_turns(self,rollout) ->:
+    @abstractmethod
+    def is_complete(self, state: State): pass
 
-        user_messages = [message for message in rollout if message.type = MessageType.Message]
-        if len(user_messages) > _over_max_turns:
+
+    def _reached_max_turns(self,rollout: Rollout, max_turns: int) -> bool:
+
+        user_messages = [message for message in rollout if message.type == MessageType.Message]
+        if len(user_messages) > max_turns:
             return False
         return True
         

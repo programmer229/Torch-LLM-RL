@@ -26,7 +26,7 @@ class GRPO(Trainer):
         
 
         if len(rewards) <= 1:
-            raise ValueError("Rollouts much be more than 1 inorder to calculate the adnvatege")
+            return torch.clip(rewards, min=-1, max=1)
 
         advantage = torch.tensor([])
 

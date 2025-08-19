@@ -21,14 +21,15 @@ class Message:
     tokenizer_ids: List[int] = None
 
 
+    def __repr__(self) -> str:
+        return f"{self.type}: {self.content}"
+
 
 
     
 class Rollout:
     def __init__(self):
         self._messages: List[Message] = []
-        self.is_complete = False
-        self.reward = None
         
     
     def __len__(self):
@@ -38,9 +39,11 @@ class Rollout:
         return self._messages[index]
 
 
-    def add_message(self, message: Message):
+    def add_messages(self, *message: Message):
         """Add a message to the conversation."""
-        self._messages.append(message)
+        
+        self._messages.extend(message)
+
 
     def format_conversation(self) -> List[dict]:
         """
@@ -48,10 +51,13 @@ class Rollout:
         
         Returns a list of message dictionaries with 'role' and 'content' keys.
         """
+        x = 2
         formatted_messages = []
-        
+
         for message in self._messages:
             # Map MessageType to chat roles
+       
+            
             if message.type == MessageType.SYSTEM:
                 role = "system"
             elif message.type == MessageType.MESSAGE:
@@ -78,4 +84,5 @@ class Rollout:
         return output
     
 
-
+    def __repr__(self) -> str:
+        return self.format_conversation_str()
