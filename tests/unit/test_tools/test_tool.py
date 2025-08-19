@@ -82,9 +82,10 @@ class TestTool:
         tags = "calculator"
         instructions = "Calculate stuff"
         
-        # This will raise NameError due to undefined 'tag' variable
-        with pytest.raises(NameError, match="name 'tag' is not defined"):
-            ConcreteTool(tags=tags, instructions=instructions)
+        # This should now work since the bug is fixed
+        tool = ConcreteTool(tags=tags, instructions=instructions)
+        assert f"<{tags}>" in tool.instructions
+        assert f"</{tags}>" in tool.instructions
     
     def test_abstract_method_exists(self):
         """Test that __call__ abstract method is defined."""
@@ -139,9 +140,10 @@ class TestTool:
     ])
     def test_init_with_various_parameters(self, tags, instructions):
         """Test initialization with various parameter combinations."""
-        # All these will fail due to the NameError bug
-        with pytest.raises(NameError):
-            ConcreteTool(tags=tags, instructions=instructions)
+        # These should now work since the bug is fixed
+        tool = ConcreteTool(tags=tags, instructions=instructions)
+        assert tool.tags == tags
+        assert instructions in tool.instructions
     
     def test_partial_implementation_fails(self):
         """Test that partial implementation of abstract methods fails."""
@@ -173,8 +175,10 @@ class TestToolBugDocumentation:
         # tag_explanation = f"\nTo use the tool use the following output <{tag}> input  to function</{tag}>"
         # 'tag' is undefined - should be 'tags'
         
-        with pytest.raises(NameError, match="name 'tag' is not defined"):
-            ConcreteTool(tags="test_tag", instructions="Test instructions")
+        # Should now work without error since the bug is fixed
+        tool = ConcreteTool(tags="test_tag", instructions="Test instructions")
+        assert tool.tags == "test_tag"
+        assert "<test_tag>" in tool.instructions
     
     def test_suggested_fix_for_tag_bug(self):
         """Test suggested fix for the tag variable bug."""

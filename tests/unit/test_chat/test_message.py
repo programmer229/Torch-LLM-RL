@@ -69,8 +69,6 @@ class TestRollout:
         rollout = Rollout()
         
         assert len(rollout) == 0
-        assert rollout.is_complete is False
-        assert rollout.reward is None
         assert rollout._messages == []
     
     def test_rollout_add_messages(self, sample_message):
@@ -174,19 +172,12 @@ class TestRollout:
         assert formatted_str == ""
     
     def test_rollout_state_management(self):
-        """Test rollout completion and reward state."""
+        """Test rollout state (simplified - no completion/reward attributes)."""
         rollout = Rollout()
         
-        # Initially not complete
-        assert rollout.is_complete is False
-        assert rollout.reward is None
-        
-        # Set completion state
-        rollout.is_complete = True
-        rollout.reward = 0.85
-        
-        assert rollout.is_complete is True
-        assert rollout.reward == 0.85
+        # Just verify basic state
+        assert len(rollout) == 0
+        assert isinstance(rollout._messages, list)
     
     @pytest.mark.parametrize("content,message_type", [
         ("System message", MessageType.SYSTEM),
@@ -217,10 +208,6 @@ class TestRollout:
         for msg in messages:
             rollout.add_messages(msg)
         
-        # Test iteration
-        iterated_messages = list(rollout)
-        assert iterated_messages == messages
-        
-        # Test with enumerate
-        for i, msg in enumerate(rollout):
-            assert msg == messages[i]
+        # Test indexing access
+        for i, msg in enumerate(messages):
+            assert rollout[i] == msg

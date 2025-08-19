@@ -222,4 +222,4 @@ class TestEnvBugDocumentation:
         
         # Method exists but cannot be called due to syntax errors
         assert hasattr(env, '_over_max_turns')
-        assert callable(env._over_max_turns')
+        assert callable(env._over_max_turns)

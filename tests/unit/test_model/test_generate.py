@@ -19,25 +19,34 @@ class TestModelGenerate:
     
     def test_init(self, mock_model, mock_tokenizer):
         """Test ModelGenerate initialization."""
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         
         assert generator.model == mock_model
         assert generator.tokenizer == mock_tokenizer
     
     def test_generate_method_exists(self, mock_model, mock_tokenizer):
         """Test that _generate method exists and is callable."""
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         
         assert hasattr(generator, '_generate')
         assert callable(generator._generate)
     
-    def test_generate_method_placeholder(self, mock_model, mock_tokenizer):
-        """Test that _generate method currently has pass implementation."""
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+    def test_generate_method_actual_implementation(self, mock_model, mock_tokenizer):
+        """Test that _generate method has actual implementation."""
+        mock_tokenizer.eos_token_id = 50256
+        mock_model.eval.return_value = None
+        mock_model.generate.return_value = torch.tensor([[1, 2, 3, 4, 5, 6]])
         
-        # Should not raise error, just return None (pass implementation)
-        result = generator._generate(torch.tensor([[1, 2, 3]]))
-        assert result is None
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
+        
+        input_ids = torch.tensor([[1, 2, 3]])
+        result = generator._generate(input_ids)
+        
+        # Should return the new tokens only
+        expected = torch.tensor([[4, 5, 6]])
+        assert torch.equal(result, expected)
+        mock_model.eval.assert_called_once()
+        mock_model.generate.assert_called_once()
     
     @patch('torch.tensor')
     def test_rollout_generate_response(self, mock_tensor_call, mock_model, mock_tokenizer):
@@ -46,10 +55,10 @@ class TestModelGenerate:
         mock_tokenizer.encode.return_value = [1, 2, 3, 4]
         mock_tokenizer.decode.return_value = "Generated response"
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         
-        # Mock the _generate method to return something
-        generator._generate = Mock(return_value=[5, 6, 7])
+        # Mock the _generate method to return tensor
+        generator._generate = Mock(return_value=torch.tensor([[5, 6, 7]]))
         
         # Create test rollout
         rollout = Rollout()
@@ -60,34 +69,31 @@ class TestModelGenerate:
         mock_tensor_call.return_value = torch.tensor([[1, 2, 3, 4]])
         
         # Execute
-        initial_length = len(rollout)
-        generator.rollout_generate_response(rollout)
+        response = generator.rollout_generate_response(rollout)
         
         # Verify results
-        assert len(rollout) == initial_length + 1
-        assert rollout[-1].content == "Generated response"
-        assert rollout[-1].type == MessageType.MODEL
+        assert response.content == "Generated response"
+        assert response.type == MessageType.MODEL
         
         # Verify method calls
         mock_tokenizer.encode.assert_called_once()
         generator._generate.assert_called_once_with(torch.tensor([[1, 2, 3, 4]]))
-        mock_tokenizer.decode.assert_called_once_with([5, 6, 7])
+        mock_tokenizer.decode.assert_called_once_with(torch.tensor([5, 6, 7]), skip_special_tokens=True)
     
     def test_rollout_generate_response_empty_rollout(self, mock_model, mock_tokenizer):
         """Test response generation with empty rollout."""
         mock_tokenizer.encode.return_value = []
         mock_tokenizer.decode.return_value = "Empty response"
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
-        generator._generate = Mock(return_value=[1, 2])
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
+        generator._generate = Mock(return_value=torch.tensor([[1, 2]]))
         
         rollout = Rollout()
         
-        generator.rollout_generate_response(rollout)
+        response = generator.rollout_generate_response(rollout)
         
-        assert len(rollout) == 1
-        assert rollout[0].type == MessageType.MODEL
-        assert rollout[0].content == "Empty response"
+        assert response.type == MessageType.MODEL
+        assert response.content == "Empty response"
     
     @patch('torch.tensor')
     def test_rollout_generate_response_conversion_flow(self, mock_tensor_call, mock_model, mock_tokenizer):
@@ -95,13 +101,13 @@ class TestModelGenerate:
         # Setup detailed mocks
         conversation_string = "system: Hello user: Hi"
         encoded_ids = [10, 20, 30]
-        generated_ids = [40, 50, 60]
+        generated_ids = torch.tensor([[40, 50, 60]])
         decoded_response = "AI response"
         
         mock_tokenizer.encode.return_value = encoded_ids
         mock_tokenizer.decode.return_value = decoded_response
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         generator._generate = Mock(return_value=generated_ids)
         
         # Create rollout that will produce known conversation string
@@ -117,9 +123,9 @@ class TestModelGenerate:
         
         # Verify the flow
         mock_tokenizer.encode.assert_called_once()
-        mock_tensor_call.assert_called_once_with(encoded_ids)
+        mock_tokenizer.encode.assert_called_once()
         generator._generate.assert_called_once_with(expected_tensor)
-        mock_tokenizer.decode.assert_called_once_with(generated_ids)
+        mock_tokenizer.decode.assert_called_once_with(torch.tensor([40, 50, 60]), skip_special_tokens=True)
     
     def test_batch_rollout_generate_response_basic(self, mock_model, mock_tokenizer):
         """Test batch rollout response generation - basic functionality."""
@@ -127,7 +133,7 @@ class TestModelGenerate:
         mock_tokenizer.encode.side_effect = [[1, 2], [3, 4], [5, 6]]
         mock_tokenizer.decode.side_effect = ["Response 1", "Response 2", "Response 3"]
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         generator._generate = Mock(return_value=[[7, 8], [9, 10], [11, 12]])
         
         # Create test rollouts
@@ -148,23 +154,26 @@ class TestModelGenerate:
             assert rollout[-1].type == MessageType.MODEL
             assert rollout[-1].content == f"Response {i + 1}"
     
-    def test_batch_rollout_generate_response_syntax_error(self, mock_model, mock_tokenizer):
-        """Test that batch generation has syntax error in list comprehension."""
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+    def test_batch_rollout_generate_response_fixed(self, mock_model, mock_tokenizer):
+        """Test that batch generation now works correctly."""
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
+        
+        def mock_tokenizer_call(prompts, return_tensors, padding, truncation):
+            return {"input_ids": torch.tensor([[1, 2, 3]])}
+        mock_tokenizer.__call__ = mock_tokenizer_call
+        mock_tokenizer.decode.return_value = "Response"
+        generator._generate = Mock(return_value=torch.tensor([[4, 5]]))
         
         rollouts = [Rollout()]
+        rollouts[0].add_messages(Message("Test", MessageType.MESSAGE))
         
-        # The current implementation has a syntax error in line 38
-        # This test documents the current buggy behavior
-        with pytest.raises(SyntaxError):
-            # This line in the source has invalid syntax:
-            # messages = [Message(output, MessageType.MODEL) in output]
-            # Should be: messages = [Message(output, MessageType.MODEL) for output in outputs]
-            exec("messages = [Message(output, MessageType.MODEL) in output]")
+        # Should now work without error
+        generator.batch_rollout_generate_response(rollouts)
+        assert len(rollouts[0]) == 2  # Original + generated message
     
     def test_batch_rollout_generate_response_empty_list(self, mock_model, mock_tokenizer):
         """Test batch generation with empty rollouts list."""
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         
         rollouts = []
         
@@ -182,7 +191,7 @@ class TestModelGenerate:
         """Test tensor creation in batch rollout generation."""
         mock_tokenizer.encode.side_effect = [[1, 2], [3, 4]]
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         generator._generate = Mock(return_value=[[5, 6], [7, 8]])
         mock_tokenizer.decode.side_effect = ["Resp1", "Resp2"]
         
@@ -205,7 +214,7 @@ class TestModelGenerate:
         mock_tokenizer.encode.return_value = [100, 200]
         mock_tokenizer.decode.return_value = "Integration test response"
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         generator._generate = Mock(return_value=[300, 400])
         
         # Create rollout with multiple message types
@@ -235,7 +244,7 @@ class TestModelGenerate:
         """Test error handling when tokenizer encode fails."""
         mock_tokenizer.encode.side_effect = Exception("Encoding failed")
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         rollout = Rollout()
         rollout.add_messages(Message("Test", MessageType.MESSAGE))
         
@@ -247,7 +256,7 @@ class TestModelGenerate:
         mock_tokenizer.encode.return_value = [1, 2, 3]
         mock_tokenizer.decode.side_effect = Exception("Decoding failed")
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         generator._generate = Mock(return_value=[4, 5, 6])
         
         rollout = Rollout()
@@ -265,7 +274,7 @@ class TestModelGenerate:
         mock_tokenizer = Mock()
         
         # Current (incorrect) parameter name
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         assert generator.tokenizer == mock_tokenizer
         
         # The correct parameter name would cause a TypeError
@@ -279,7 +288,7 @@ class TestModelGenerate:
         mock_tokenizer.encode.side_effect = [[i] * 3 for i in range(num_rollouts)]
         mock_tokenizer.decode.side_effect = [f"Response {i}" for i in range(num_rollouts)]
         
-        generator = ModelGenerate(model=mock_model, tokenzier=mock_tokenizer)
+        generator = ModelGenerate(model=mock_model, tokenizer=mock_tokenizer)
         generator._generate = Mock(return_value=[[i + 100] * 3 for i in range(num_rollouts)])
         
         # Create rollouts

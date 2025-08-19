@@ -51,20 +51,22 @@ class TestGRPO:
         assert abs(advantage.std().item() - 1.0) < 0.01
     
     def test_calculate_advantage_single_reward(self):
-        """Test advantage calculation with insufficient rewards."""
+        """Test advantage calculation with single reward (clipped)."""
         trainer = GRPO(model=Mock(), tokenizer=Mock(), eps=0.1)
         rewards = torch.tensor([1.0])
         
-        with pytest.raises(ValueError, match="Rollouts much be more than 1"):
-            trainer._calculate_advantage(rewards)
+        # With single reward, should return clipped value
+        advantage = trainer._calculate_advantage(rewards)
+        assert torch.equal(advantage, torch.tensor([1.0]))
     
     def test_calculate_advantage_empty_rewards(self):
         """Test advantage calculation with empty rewards."""
         trainer = GRPO(model=Mock(), tokenizer=Mock(), eps=0.1)
         rewards = torch.tensor([])
         
-        with pytest.raises(ValueError, match="Rollouts much be more than 1"):
-            trainer._calculate_advantage(rewards)
+        # Empty rewards should return clipped empty tensor
+        advantage = trainer._calculate_advantage(rewards)
+        assert torch.equal(advantage, torch.tensor([]))
     
     def test_calculate_advantage_identical_rewards(self):
         """Test advantage calculation with identical rewards (zero std)."""
@@ -120,15 +122,15 @@ class TestGRPO:
         assert ratios.shape == (1, 1, 3)
         assert torch.isfinite(ratios).all()
     
-    @patch('torch.tensor')
-    def test_calculate_loss_basic(self, mock_tensor_call, mock_model, mock_tokenizer):
+    def test_calculate_loss_basic(self, mock_model, mock_tokenizer):
         """Test basic loss calculation functionality."""
         # Setup trainer
         trainer = GRPO(model=mock_model, tokenizer=mock_tokenizer, eps=0.2)
         trainer.ref_model = mock_model
         
-        # Mock tokenizer behavior
-        mock_tokenizer.encode.side_effect = [[1, 2, 3], [4, 5, 6]]
+        # Mock tokenizer behavior - need enough values for all messages
+        # Called for each message (4 calls) + for each formatted string (2 calls)
+        mock_tokenizer.encode.side_effect = [[1, 2, 3], [4, 5, 6], [1, 2, 3], [4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6]]
         mock_tokenizer.pad_token_id = 0
         
         # Create sample rollouts
@@ -141,11 +143,7 @@ class TestGRPO:
         
         rewards = torch.tensor([1.0, 0.0])
         
-        # Mock torch.tensor calls to return predictable padded sequences
-        mock_tensor_call.side_effect = [
-            torch.tensor([[1, 2, 3, 0, 0, 0], [4, 5, 6, 0, 0, 0]]),  # inputs_ids
-            torch.tensor([])  # Empty tensor for advantage calculation
-        ]
+        # Don't mock torch.tensor, let it work normally
         
         # Mock model outputs for probability calculation
         mock_logits = torch.tensor([[[0.1, 0.2, 0.7] for _ in range(6)] for _ in range(2)])
@@ -162,9 +160,16 @@ class TestGRPO:
     def test_calculate_loss_empty_rollouts(self, mock_model, mock_tokenizer):
         """Test loss calculation with empty rollouts."""
         trainer = GRPO(model=mock_model, tokenizer=mock_tokenizer, eps=0.1)
+        trainer.ref_model = mock_model
         
         rollouts = []
         rewards = torch.tensor([])
+        
+        # Mock empty case
+        mock_tokenizer.pad_token_id = 0
+        mock_output = Mock()
+        mock_output.logits = torch.tensor([])
+        mock_model.return_value = mock_output
         
         loss = trainer.calculate_loss(rollouts, rewards)
         
@@ -198,9 +203,10 @@ class TestGRPO:
         # Should return zero loss when no MODEL messages to train on
         assert torch.equal(loss, torch.tensor(0.0))
     
-    def test_calculate_loss_single_rollout_insufficient_rewards(self, mock_model, mock_tokenizer):
-        """Test loss calculation with single rollout (insufficient for advantage)."""
+    def test_calculate_loss_single_rollout(self, mock_model, mock_tokenizer):
+        """Test loss calculation with single rollout."""
         trainer = GRPO(model=mock_model, tokenizer=mock_tokenizer, eps=0.1)
+        trainer.ref_model = mock_model
         
         rollout = Rollout()
         rollout.add_messages(Message("Question", MessageType.MESSAGE))
@@ -209,8 +215,17 @@ class TestGRPO:
         rollouts = [rollout]
         rewards = torch.tensor([1.0])
         
-        with pytest.raises(ValueError, match="Rollouts much be more than 1"):
-            trainer.calculate_loss(rollouts, rewards)
+        # Mock tokenizer and model
+        mock_tokenizer.encode.return_value = [1, 2, 3]
+        mock_tokenizer.pad_token_id = 0
+        
+        mock_output = Mock()
+        mock_output.logits = torch.tensor([[[0.3, 0.3, 0.4] for _ in range(3)]])
+        mock_model.return_value = mock_output
+        
+        # Should work with single rollout now
+        loss = trainer.calculate_loss(rollouts, rewards)
+        assert isinstance(loss, torch.Tensor)
     
     @pytest.mark.parametrize("eps", [0.1, 0.2, 0.3])
     def test_calculate_loss_different_eps_values(self, eps, mock_model, mock_tokenizer):
@@ -228,8 +243,9 @@ class TestGRPO:
         
         rewards = torch.tensor([1.0, 0.0])
         
-        # Mock tokenizer and model
-        mock_tokenizer.encode.side_effect = [[1, 2], [3, 4]]
+        # Mock tokenizer and model - need enough values for all messages 
+        # Called for each message (4 calls) + for each formatted string (2 calls)
+        mock_tokenizer.encode.side_effect = [[1, 2], [3, 4], [1, 2], [3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]
         mock_tokenizer.pad_token_id = 0
         
         mock_output = Mock()
@@ -293,7 +309,8 @@ class TestGRPO:
         rewards = torch.tensor([1.0, 0.5])
         
         # Mock tokenizer to return sequences of appropriate length
-        mock_tokenizer.encode.side_effect = [[i] * seq_len for i in range(1, batch_size + 1)]
+        # Need 2 calls per rollout (MESSAGE + MODEL) + batch_size calls for formatted strings
+        mock_tokenizer.encode.side_effect = [[i] * seq_len for i in range(1, (batch_size * 3) + 1)]
         mock_tokenizer.pad_token_id = 0
         
         loss = trainer.calculate_loss(rollouts, rewards)

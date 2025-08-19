@@ -66,7 +66,7 @@ class ModelGenerate():
         messages = [Message(output, MessageType.MODEL) for output in outputs]
 
         for message, rollout in zip(messages, rollouts):
-            rollout.add_message(message)
+            rollout.add_messages(message)
         
 
 

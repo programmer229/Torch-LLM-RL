@@ -45,6 +45,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 reward = BoxedReward()
 
 env = QASolverEnv(
+    reward=reward,
+    dataset=dataset,
     custom_sys_prompt="Solve the following Math problems:"
 )
 
@@ -125,7 +127,7 @@ for epoch in range(num_epochs):
             total_loss += batch_loss
             running_loss += batch_loss
             epoch_loss += batch_loss
-            print(loss.item())
+            
             # Update progress bar
             pbar.set_postfix({
                 'loss': f'{batch_loss:.4f}',
@@ -133,6 +135,30 @@ for epoch in range(num_epochs):
                 'rewards': f'{rewards.mean().item():.3f}'
             })
             
+            # Save model checkpoint
+            if step % save_every == 0:
+                checkpoint_path = f"model_checkpoint_step_{step}.pt"
+                torch.save({
+                    'step': step,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': total_loss / step,
+                }, checkpoint_path)
+                print(f"\nSaved checkpoint: {checkpoint_path}")
+    
+    # Epoch summary
+    avg_epoch_loss = epoch_loss / num_batches
+    print(f"Epoch {epoch + 1} completed. Average loss: {avg_epoch_loss:.4f}")
+
+# Final save
+final_model_path = f"final_model_epoch_{num_epochs}.pt"
+torch.save({
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'final_loss': total_loss / step,
+    'total_steps': step
+}, final_model_path)
+
 print(f"\nTraining completed!")
 print(f"Total steps: {step}")
 print(f"Final average loss: {total_loss / step:.4f}")

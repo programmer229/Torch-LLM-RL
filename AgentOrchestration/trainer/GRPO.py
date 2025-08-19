@@ -75,6 +75,10 @@ class GRPO(Trainer):
         formatted_strings = [rollout.format_conversation_str() for rollout in rollouts]
         encoded_inputs = [self.tokenizer.encode(string) for string in formatted_strings]
         
+        # Handle empty rollouts case
+        if not encoded_inputs:
+            return torch.tensor(0.0)
+        
         # Pad sequences to same length
         max_length = max(len(seq) for seq in encoded_inputs)
         inputs_ids = torch.tensor([

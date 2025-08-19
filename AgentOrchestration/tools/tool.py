@@ -18,7 +18,7 @@ class Tool(ABC):
         """
         self.tags = tags
 
-        tag_explanation = f"\nTo use the tool use the following output <{tag}> input  to function</{tag}>"
+        tag_explanation = f"\nTo use the tool use the following output <{tags}> input  to function</{tags}>"
         self.instructions = instructions + tag_explanation
 
     

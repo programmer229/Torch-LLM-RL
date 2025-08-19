@@ -17,18 +17,12 @@ class QASolverEnv(Env):
 
 
     def __init__(self, 
-                dataset, 
-                reward: Reward,
                 custom_sys_prompt = None
                 ) -> None:
         super().__init__()
-        self.reward = reward
-        
-        self.dataset = dataset
+     
         self.custom_sys_prompt = ""
-        
-        self.question = None
-        self.ground_truth = None
+
         
     
     def setup(self, question, ground_truth) -> Tuple[List[Message], State]: 

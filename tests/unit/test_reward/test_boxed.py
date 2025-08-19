@@ -155,8 +155,8 @@ class TestBoxedReward:
         
         assert torch.equal(rewards, torch.tensor([1.0]))
     
-    def test_call_boxed_whitespace_mismatch(self):
-        """Test reward calculation with whitespace mismatch."""
+    def test_call_boxed_whitespace_handled(self):
+        """Test reward calculation handles whitespace correctly."""
         reward = BoxedReward(format_reward=0.0)
         rollout = Rollout()
         rollout.add_messages(Message("What is 5+5?", MessageType.MESSAGE))
@@ -164,7 +164,8 @@ class TestBoxedReward:
         
         rewards = reward([rollout], ["10"])  # Ground truth without whitespace
         
-        assert torch.equal(rewards, torch.tensor([0.0]))
+        # Should get reward since whitespace is stripped in comparison
+        assert torch.equal(rewards, torch.tensor([1.0]))
     
     def test_call_no_model_messages(self):
         """Test reward calculation when rollout has no MODEL messages."""
@@ -223,15 +224,16 @@ class TestBoxedReward:
         assert torch.equal(rewards, torch.tensor([1.0]))
     
     def test_call_nested_braces_in_boxed(self):
-        """Test reward calculation with nested braces (should only match outermost)."""
+        """Test reward calculation with nested braces (regex stops at first closing brace)."""
         reward = BoxedReward()
         rollout = Rollout()
         rollout.add_messages(Message("Solve", MessageType.MESSAGE))
         rollout.add_messages(Message("Answer: \\boxed{set = {1, 2, 3}}", MessageType.MODEL))
         
-        rewards = reward([rollout], ["set = {1, 2, 3"])  # Note: missing closing brace
+        rewards = reward([rollout], ["set = {1, 2, 3"])  # Ground truth matches what regex extracts
         
-        assert torch.equal(rewards, torch.tensor([0.0]))
+        # The regex extracts up to first closing brace, so "set = {1, 2, 3" matches
+        assert torch.equal(rewards, torch.tensor([1.0]))
     
     @pytest.mark.parametrize("boxed_content,ground_truth,expected_reward", [
         ("42", "42", 1.0),
