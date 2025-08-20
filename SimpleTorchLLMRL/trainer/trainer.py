@@ -13,9 +13,9 @@ class Trainer(ABC):
         super().__init__()
     
 
-    
-def calculate_loss(self, rollouts: List[Rollout], agent_model, ref_model, kl_model):
-        pass
+    @abstractmethod
+    def calculate_loss(self, rollouts: List[Rollout], agent_model, ref_model, kl_model):
+            pass
 
     
     

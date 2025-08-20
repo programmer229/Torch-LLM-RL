@@ -137,4 +137,4 @@ for epoch in range(num_epochs):
 print(f"\nTraining completed!")
 print(f"Total steps: {step}")
 print(f"Final average loss: {total_loss / step:.4f}")
-print(f"Final model saved: {final_model_path}")
+# Training completed
