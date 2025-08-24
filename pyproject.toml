@@ -19,6 +19,10 @@ dependencies = [
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["AgentOrchestration*"]

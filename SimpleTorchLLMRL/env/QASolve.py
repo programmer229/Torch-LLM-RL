@@ -17,7 +17,7 @@ class QASolverEnv(Env):
 
 
     def __init__(self, 
-                custom_sys_prompt:str = None
+                custom_sys_prompt:str | None = None
                 ) -> None:
         super().__init__()
      
@@ -50,9 +50,6 @@ class QASolverEnv(Env):
         return self._reached_max_turns(rollout, max_turns=1) # single turn
 
 
-    def get_env_response(self, rollout:Rollout, state: State) -> Message: 
-        #No response needed for this class
-        pass
 
 
         

@@ -132,7 +132,7 @@ class TAEnv(Env, ABC):
         
         return response_message, state
 
-    def is_complete(self, state: State) -> bool:
+    def is_complete(self, rollout:Rollout, state: State) -> bool:
         """Check if the game/environment is finished."""
         return state.get("is_finished", False)
 

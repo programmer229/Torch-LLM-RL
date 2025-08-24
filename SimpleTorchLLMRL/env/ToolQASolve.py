@@ -15,7 +15,7 @@ class ToolUseEnv(QASolverEnv):
 
 
     def __init__(self,
-                tools:List[Tool]| None = None,
+                tools:list[Tool]| None = None,
                 custom_sys_prompt = None) -> None:
         super().__init__()
         

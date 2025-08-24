@@ -27,6 +27,9 @@ from SimpleTorchLLMRL.tools import Calculator
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
+
+
+
 env = ToolUseEnv(
     custom_sys_prompt="Solve the following Math problems:",
     tools = [Calculator()]
@@ -40,8 +43,8 @@ sys_message, state  = env.setup("","")
 rollout.add_messages(*sys_message)
 message = Message(content="<calculator>2+2</calculator>", type=MessageType.MODEL)
 rollout.add_messages(message)
-response = env.get_response_to_model(rollout, state)
-print(response)
+response_message, state = env.get_response_to_model(rollout, state)
+print(response_message)
 
 
 

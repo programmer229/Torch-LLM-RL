@@ -14,7 +14,7 @@ class Trainer(ABC):
     
 
     @abstractmethod
-    def calculate_loss(self, rollouts: List[Rollout], agent_model, ref_model, kl_model):
+    def calculate_loss(self, rollouts: List[Rollout], *args, **kwargs):
             pass
 
     
