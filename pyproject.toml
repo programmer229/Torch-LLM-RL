@@ -10,6 +10,7 @@ dependencies = [
     "ipykernel>=6.30.1",
     "openai>=1.99.6",
     "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
     "textarena>=0.7.3",
     "transformers>=4.55.0",
 ]
