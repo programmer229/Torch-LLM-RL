@@ -1,6 +1,6 @@
 
 
-from typing import List
+from typing import List, Optional
 
 from dataclasses import dataclass
 from enum import Enum
@@ -18,7 +18,7 @@ class Message:
     
     content: str
     type: MessageType
-    tokenizer_ids: List[int] = None
+    tokenizer_ids: List[int] | None = None
 
 
     def __repr__(self) -> str:

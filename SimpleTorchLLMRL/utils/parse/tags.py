@@ -22,7 +22,9 @@ def tag_parse(inside_tags:str, text:str) -> list[str]:
         tag_start_end.append((start_inside, end))
         search_pos = end + len(end_tag)
     
-    return tag_start_end
+    text_in_tags = [text[start:end] for start,end in tag_start_end]
+    return text_in_tags
+
 
 
     
