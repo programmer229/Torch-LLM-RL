@@ -1,6 +1,6 @@
 
-import copy
 from abc import ABC, abstractmethod
+import copy
 import token
 from typing import List
 from collections import defaultdict
@@ -8,35 +8,60 @@ from collections import defaultdict
 from .trainer import Trainer
 from SimpleTorchLLMRL.chat.message import Rollout, MessageType
 import torch
-
-class GRPO(Trainer):
-
+import torch.nn as nn
 
 
-    def __init__(self, model, tokenizer, eps) -> None:
+
+class ActorCriticLLM(nn.Module):
+
+    def __init__(self, model) -> None:
+        super().__init__()
+        self.model = model
+        self.value_head = nn.Linear(model.config.hidden_size,1)
+
+    
+    def forwad(self,x):
+        outputs = self.base_model(x, output_hidden_states=True)
+        last_hidden_state = self.value_head(outputs)[-1]
+        value = self.value_head(last_hidden_state[:, -1, :])
+        return value
+
+
+
+
+class PPO(Trainer):
+
+
+
+    def __init__(self, model, 
+                    critic_model, 
+                    tokenizer, 
+                    eps:float) -> None:
         super().__init__()
         self.model = model
         self.ref_model = copy.deepcopy(model) if model else None
+        self.critic_model = ActorCriticLLM(copy.deepcopy(model))
+        # self.critic_model =
         self.tokenizer = tokenizer
         self.eps = eps
 
         
 
-    def _calculate_advantage(self, rewards: torch.tensor) -> torch.tensor:
+    def _calculate_advantage(self, rewards: torch.TensorType, 
+                                    input_ids: torch.TensorType, 
+                                    use_gae= False) -> torch.tensor:
         
+        # rewards : [rollouts]
+        # inputsids: [rollouts, num_tokens, vocab_size]
 
-        if len(rewards) <= 1:
-            return torch.clip(rewards, min=-1, max=1)
-
-        advantage = torch.tensor([])
-
-        float_rewards = rewards.float()
-        reward_mean = torch.mean(float_rewards)
-        reward_std = torch.std(float_rewards)
-
-        advantage = (float_rewards -reward_mean)/reward_std
-        advantage= torch.nan_to_num(advantage, 0)
-    
+        critic_scores = self.critic_model(input_ids).squeeze(-1) #rollouts, num_tokens
+     
+        seq_len = critic_scores.size()[-1]
+     
+        seq_rewards = rewards.repeat(1,seq_len)
+        
+        advantage = seq_rewards - critic_scores
+        
         return advantage
     
 
@@ -53,9 +78,6 @@ class GRPO(Trainer):
       
         return ratios
 
-    def update_ref_model(self, ref_model):
-        self.ref_model = ref_model
-        
     
     def calculate_loss(self, rollouts: List[Rollout], rewards: torch.TensorType):
         
@@ -73,11 +95,13 @@ class GRPO(Trainer):
         
         
         
-        advantage = self._calculate_advantage(rewards)
+        
 
         formatted_strings = [rollout.format_conversation_str() for rollout in rollouts]
         encoded_inputs = [self.tokenizer.encode(string) for string in formatted_strings]
         
+        advantage = self._calculate_advantage(rewards, encoded_inputs)
+
         # Handle empty rollouts case
         if not encoded_inputs:
             return torch.tensor(0.0)
