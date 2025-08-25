@@ -38,8 +38,7 @@ class Rollout:
     def __getitem__(self, index):
         return self._messages[index]
 
-    def __iter__(self):
-        return iter(self)
+   
         
     def add_messages(self, *message: Message):
         """Add a message to the conversation."""
@@ -81,7 +80,7 @@ class Rollout:
         output = ""
 
         for formatted_messages in self.format_conversation():
-            output += f"{formatted_messages['role']}: {formatted_messages['content']}"
+            output += f"{formatted_messages['role']}: {formatted_messages['content']} "
         
         return output
     

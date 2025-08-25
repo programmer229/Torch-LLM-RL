@@ -108,6 +108,7 @@ for epoch in range(num_epochs):
                 rollouts.append(rollout)
                 ground_truths.append(ground_truth)
             
+            print(rollouts)
             # Calculate rewards
             rewards = reward(rollouts, ground_truths)
             print(rewards)
@@ -118,6 +119,7 @@ for epoch in range(num_epochs):
             # Backward pass
             optimizer.zero_grad()
             loss.backward()
+            trainer.update_ref_model()
             optimizer.step()
             
             # Update metrics

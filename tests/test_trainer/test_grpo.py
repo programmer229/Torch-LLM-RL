@@ -81,7 +81,7 @@ class TestGRPO:
     def test_calculate_prob_ratios(self, mock_model, mock_tokenizer):
         """Test probability ratio calculation."""
         # Setup mock model outputs
-        mock_logits = torch.tensor([[[1.0, 2.0, 3.0], [0.5, 1.5, 2.5]]])
+        mock_logits = torch.tensor([[[0.0, 1.0, 2.0], [0.5, 1.5, 2.5]]])
         mock_output = Mock()
         mock_output.logits = mock_logits
         
@@ -91,7 +91,7 @@ class TestGRPO:
         trainer.ref_model = Mock()
         trainer.ref_model.return_value = mock_output  # Same output for simplicity
         
-        input_ids = torch.tensor([[1, 2, 3]])
+        input_ids = torch.tensor([[1, 2, 2]])
         ratios = trainer._calculate_prob_ratios(input_ids)
         
         # With identical model and ref_model outputs, ratios should be 1

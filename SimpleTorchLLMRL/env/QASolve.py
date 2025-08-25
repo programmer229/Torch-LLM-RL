@@ -52,6 +52,7 @@ class QASolverEnv(Env):
 
 
 
+    def get_env_response(self, *args, **kwargs): pass
         
         
 
