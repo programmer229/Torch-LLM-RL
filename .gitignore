@@ -174,10 +174,13 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
-test.ipynb
-
-.claude
-.vscode
+# Editor and IDE
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # ML/AI specific
 *.pt
@@ -202,17 +205,8 @@ datasets/
 todo.txt
 simple_example.py
 *_fixed.py
+test.ipynb
 
 # OS specific
 .DS_Store
 Thumbs.db
-
-# IDE specific
-.idea/
-*.swp
-*.swo
-*~
-
-test.ipynb
-
-.vscode
