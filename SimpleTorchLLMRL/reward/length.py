@@ -19,7 +19,7 @@ def length_penalty(rollouts: List[Rollout], ground_truth: List[str]) -> torch.Te
         if model_message is not None:
             # Calculate penalty based on length difference from target (20 chars)
             length_diff = abs(len(model_message.content) - 20)
-            reward = 1 -length_diff / 1000.0  # Negative penalty, normalized
+            reward = 1 -length_diff / 100.0  # Negative penalty, normalized
             rewards.append(reward)
         else:
             # No model message found, give zero reward

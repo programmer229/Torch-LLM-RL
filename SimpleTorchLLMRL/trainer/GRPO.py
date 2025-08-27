@@ -12,7 +12,7 @@ class GRPO(Trainer):
         super().__init__()
         self.model = model
         self.ref_model = copy.deepcopy(model).eval()
-        self.base_model = copy.deepcopy(model).eval()
+        self.base_model = copy.deepcopy(model).eval() if use_kl else None
         self.tokenizer = tokenizer
         self.eps = eps
 
@@ -60,15 +60,17 @@ class GRPO(Trainer):
             ref_out = base_model(input_ids=input_ids, return_dict=True)
             ref_logits = ref_out.logits
         
-        model_logits = model(input_ids=input_ids, return_dict=True)
+        ref_logits_probs = torch.nn.log_softmax(ref_logits, dim=-1)
+        
+        model_logits = model(input_ids=input_ids, return_dict=True).logits
         model_probs = torch.nn.log_softmax(model_logits, dim=-1)
         
-        ref_logits_probs = torch.nn.log_softmax(ref_logits, dim=-1)
-        ref_logits_probs = torch.nn.log_softmax(ref_logits, dim=-1)
 
+        kl_divergence = ((model_probs - ref_logits_probs) * torch.exp(model_probs)).sum(-1)
+        
+        return kl_divergence
 
-
-        pass
+    
 
     def update_ref_model(self):
         self.ref_model.load_state_dict(self.model.state_dict())

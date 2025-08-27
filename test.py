@@ -36,8 +36,6 @@ env = ToolUseEnv(
 )
 
 
-
-
 rollout = Rollout()
 sys_message, state  = env.setup("","")
 rollout.add_messages(*sys_message)

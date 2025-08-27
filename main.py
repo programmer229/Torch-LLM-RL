@@ -108,7 +108,7 @@ for epoch in range(num_epochs):
                 rollouts.append(rollout)
                 ground_truths.append(ground_truth)
             
-            print(rollouts)
+          
             # Calculate rewards
             rewards = reward(rollouts, ground_truths)
             print(rewards)
