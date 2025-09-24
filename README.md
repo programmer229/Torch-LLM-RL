@@ -13,6 +13,7 @@ Unlike other RL libraries that abstract away PyTorch, SimpleTorchLLMRL is built 
 - **Tool Integration**: Built-in support for function calling and external tools
 - **Multi-Agent Support**: Natural extension to multi-agent scenarios
 - **Modular Design**: Mix and match components as needed
+- **Router-R1 Training**: Drop-in PPO trainer, reward shaping, and logging utilities to reproduce the Router-R1 strategy on top of SimpleTorchLLMRL components
 
 
 
@@ -253,3 +254,13 @@ MIT License - see LICENSE file for details
 
 
 ---
+## 🛣️ Router-R1 Integration
+
+The `SimpleTorchLLMRL.router_r1` package bundles the components required to reproduce the Router-R1 reinforcement learning recipe. It ships with:
+
+- configuration dataclasses that mirror the original Hydra setup
+- a generation manager that prepares `<think>`, `<search>`, `<information>`, and `<answer>` rollouts
+- a rule-based reward function with exact-match and F1 scoring plus format penalties
+- a PPO training loop that logs to console or Weights & Biases at configurable validation intervals
+
+See `examples/router_r1_training.py` for a minimal toy walkthrough or `examples/router_r1_math_qwen.py` for a HendrycksMath + Qwen training harness similar to the original `train.sh` workflow.

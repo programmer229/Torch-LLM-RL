@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import copy
 # import token  # unused; removed to avoid shadowing stdlib names
-from typing import List
+from typing import List, Optional
 from collections import defaultdict
 
 from .trainer import Trainer
@@ -35,10 +35,19 @@ class PPO(Trainer):
     def __init__(self, model,
                  critic_model=None,
                  tokenizer=None,
-                 eps: float = 0.2) -> None:
+                 eps: float = 0.2,
+                 reference_model=None,
+                 freeze_reference: bool = True) -> None:
         super().__init__()
         self.model = model
-        self.ref_model = copy.deepcopy(model).eval() 
+        if reference_model is not None:
+            self.ref_model = reference_model
+        else:
+            self.ref_model = copy.deepcopy(model)
+        self.ref_model.eval()
+        if freeze_reference:
+            for param in self.ref_model.parameters():
+                param.requires_grad = False
         # use provided critic_model if passed; otherwise wrap a copy of the actor
         self.critic_model = critic_model if critic_model is not None else ActorCriticLLM(copy.deepcopy(model))
         self.tokenizer = tokenizer
@@ -56,7 +65,11 @@ class PPO(Trainer):
         """
         # Critic values per token: [B, T]
         with torch.no_grad():
-            values = self.critic_model(input_ids=input_ids, attention_mask=attention_mask)
+            critic_device = next(self.critic_model.parameters()).device
+            critic_input_ids = input_ids.to(critic_device)
+            critic_attention_mask = attention_mask.to(critic_device) if attention_mask is not None else None
+            values = self.critic_model(input_ids=critic_input_ids, attention_mask=critic_attention_mask)
+            values = values.to(input_ids.device)
 
         B, T = input_ids.shape
         rewards = rewards.to(input_ids.device).view(B)  # [B]
@@ -89,12 +102,16 @@ class PPO(Trainer):
 
         # Reference policy logits (no grad)
         with torch.no_grad():
-            ref_out = self.ref_model(input_ids=input_ids, attention_mask=attention_mask, return_dict=True)
-            ref_logits = ref_out.logits  # [B, T, V]
+            ref_device = next(self.ref_model.parameters()).device
+            ref_input_ids = input_ids.to(ref_device)
+            ref_attention_mask = attention_mask.to(ref_device) if attention_mask is not None else None
+            ref_out = self.ref_model(input_ids=ref_input_ids, attention_mask=ref_attention_mask, return_dict=True)
+            ref_logits = ref_out.logits
 
         # Log-probs of actually taken tokens
         logp = F.log_softmax(logits, dim=-1).gather(-1, input_ids.unsqueeze(-1)).squeeze(-1)      # [B, T]
-        ref_logp = F.log_softmax(ref_logits, dim=-1).gather(-1, input_ids.unsqueeze(-1)).squeeze(-1)  # [B, T]
+        ref_logp = F.log_softmax(ref_logits, dim=-1).gather(-1, ref_input_ids.unsqueeze(-1)).squeeze(-1)
+        ref_logp = ref_logp.to(logp.device)
 
         ratios = torch.exp(logp - ref_logp)  # [B, T]
         return ratios
