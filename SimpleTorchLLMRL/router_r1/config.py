@@ -69,7 +69,7 @@ class RouterTrainingConfig:
     """Convenience bundle collecting all Router specific sub-configs."""
 
     data: RouterDataConfig
-    generation: RouterGenerationConfig = RouterGenerationConfig()
-    trainer: RouterTrainerConfig = RouterTrainerConfig()
-    reward: RouterRewardConfig = RouterRewardConfig()
-    validation: RouterValidationConfig = RouterValidationConfig()
+    generation: RouterGenerationConfig = field(default_factory=RouterGenerationConfig)
+    trainer: RouterTrainerConfig = field(default_factory=RouterTrainerConfig)
+    reward: RouterRewardConfig = field(default_factory=RouterRewardConfig)
+    validation: RouterValidationConfig = field(default_factory=RouterValidationConfig)
