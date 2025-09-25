@@ -25,7 +25,7 @@ ignore_missing_imports = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["AgentOrchestration*"]
+include = ["SimpleTorchLLMRL*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
