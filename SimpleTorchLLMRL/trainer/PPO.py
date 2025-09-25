@@ -62,8 +62,8 @@ class PPO(Trainer):
         if freeze_reference:
             for param in self.ref_model.parameters():
                 param.requires_grad = False
-        # use provided critic_model if passed; otherwise wrap a copy of the actor
-        self.critic_model = critic_model if critic_model is not None else ActorCriticLLM(copy.deepcopy(model))
+        # use provided critic_model if passed; otherwise share the actor backbone to avoid duplicating weights
+        self.critic_model = critic_model if critic_model is not None else ActorCriticLLM(self.model)
         self.tokenizer = tokenizer
         self.eps = eps
 
