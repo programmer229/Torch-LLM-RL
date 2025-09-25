@@ -118,7 +118,7 @@ def main() -> None:
     tokenizer.padding_side = "left"
 
     model = load_model(args.model, args.torch_dtype, args.device_map)
-    if model.config.get("use_cache", True):
+    if getattr(model.config, "use_cache", True):
         model.config.use_cache = False
 
     reference_model = None
