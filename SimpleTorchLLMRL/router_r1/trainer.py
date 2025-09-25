@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 import torch
 from torch.utils.data import DataLoader, Dataset
 
+from SimpleTorchLLMRL.chat.message import Rollout
 from SimpleTorchLLMRL.router_r1.config import RouterTrainingConfig
 from SimpleTorchLLMRL.router_r1.generation import RouterGenerationManager
 from SimpleTorchLLMRL.router_r1.reward import RouterReward, RouterRewardResult
@@ -132,6 +134,8 @@ class RouterR1Trainer:
 
     def _training_step(self, batch: RouterBatch) -> Dict[str, float]:
         rollouts = self.generation_manager.generate_from_questions(batch.questions)
+        if self.config.trainer.log_train_completions:
+            self._log_train_completions(rollouts)
         reward_result = self.reward_fn(rollouts, batch.solutions, state="train", data_sources=batch.data_sources)
 
         rewards = reward_result.rewards.to(self.device)
@@ -157,6 +161,31 @@ class RouterR1Trainer:
         }
 
         return metrics
+
+    def _log_train_completions(self, rollouts: Sequence[Rollout]) -> None:
+        completions = self.generation_manager.extract_completions(rollouts)
+        if not completions:
+            print("[TRAIN] No completions produced this step.")
+            return
+
+        max_examples = 3
+        max_chars = 400
+        for idx, completion in enumerate(completions[:max_examples]):
+            snippet = completion if len(completion) <= max_chars else completion[:max_chars] + "…"
+            print(f"[TRAIN] completion[{idx}]: {snippet}")
+
+        file_path = self.config.trainer.log_train_completions_file
+        if file_path:
+            try:
+                path_obj = Path(file_path)
+                if not path_obj.parent.exists():
+                    path_obj.parent.mkdir(parents=True, exist_ok=True)
+                with path_obj.open("a", encoding="utf-8") as fh:
+                    fh.write("=== TRAIN STEP " + str(self.global_step) + " ===\n")
+                    for idx, completion in enumerate(completions):
+                        fh.write(f"completion[{idx}]:\n{completion}\n\n")
+            except OSError as exc:
+                print(f"[WARN] Failed to write train completions to '{file_path}': {exc}")
 
     def validate(self) -> Dict[str, float]:
         if self.val_dataloader is None:

@@ -42,6 +42,8 @@ class RouterTrainerConfig:
     logger_backends: List[str] = field(default_factory=lambda: ["console"])
     gradient_accumulation: int = 1
     max_grad_norm: Optional[float] = 1.0
+    log_train_completions: bool = False
+    log_train_completions_file: Optional[str] = None
 
 
 @dataclass

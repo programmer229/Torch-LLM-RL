@@ -64,6 +64,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--save-completions", action="store_true")
     parser.add_argument("--logger", default="['console']",
                         help="Tracker backends, e.g. ['console','wandb']")
+    parser.add_argument("--log-train-completions", action="store_true",
+                        help="Print a sample of model completions each training step")
+    parser.add_argument("--log-train-completions-file", default=None,
+                        help="Optional path to append train completions for offline inspection")
     return parser.parse_args()
 
 
@@ -154,6 +158,8 @@ def main() -> None:
             project_name=args.project_name,
             experiment_name=args.experiment_name,
             logger_backends=ast.literal_eval(args.logger),
+            log_train_completions=args.log_train_completions,
+            log_train_completions_file=args.log_train_completions_file,
         ),
         validation=RouterValidationConfig(store_completions=args.save_completions),
     )
