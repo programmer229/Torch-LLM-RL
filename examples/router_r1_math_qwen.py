@@ -35,6 +35,8 @@ def parse_args() -> argparse.Namespace:
                         help="Actor/critic model name (HF hub path)")
     parser.add_argument("--reference-model", default=None,
                         help="Optional reference policy weights. Defaults to reloading --model on CPU.")
+    parser.add_argument("--dataset", default="EleutherAI/hendrycks_math",
+                        help="HF dataset identifier for HendrycksMath")
     parser.add_argument("--subject", default="algebra",
                         help="HendrycksMath subject split (e.g. algebra, geometry, number_theory)")
     parser.add_argument("--train-split", default="train", help="HF dataset split for training")
@@ -73,8 +75,8 @@ def extract_boxed_answer(solution: str) -> str:
     return cleaned[-1].strip() if cleaned else solution.strip()
 
 
-def build_dataset(subject: str, split: str, limit: Optional[int]) -> Dataset:
-    hf_ds = load_dataset("hendrycks_math", subject, split=split)
+def build_dataset(dataset_path: str, subject: str, split: str, limit: Optional[int]) -> Dataset:
+    hf_ds = load_dataset(dataset_path, subject, split=split)
     if limit is not None:
         hf_ds = hf_ds.select(range(min(limit, len(hf_ds))))
 
@@ -128,8 +130,9 @@ def main() -> None:
         print("[INFO] Loading reference policy on CPU (may require large memory).")
         reference_model = load_model(args.model, args.torch_dtype, "cpu")
 
-    train_dataset = build_dataset(args.subject, args.train_split, args.train_samples)
-    val_dataset = build_dataset(args.subject, args.val_split, args.val_samples) if args.val_split else None
+    train_dataset = build_dataset(args.dataset, args.subject, args.train_split, args.train_samples)
+    val_dataset = (build_dataset(args.dataset, args.subject, args.val_split, args.val_samples)
+                   if args.val_split else None)
 
     trainer_config = RouterTrainingConfig(
         data=RouterDataConfig(
