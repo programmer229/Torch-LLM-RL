@@ -45,9 +45,9 @@ def parse_args() -> argparse.Namespace:
                         help="Optional cap on training samples for quick experiments")
     parser.add_argument("--val-samples", type=int, default=512,
                         help="Optional cap on validation samples")
-    parser.add_argument("--train-batch-size", type=int, default=64)
-    parser.add_argument("--val-batch-size", type=int, default=64)
-    parser.add_argument("--max-new-tokens", type=int, default=1024)
+    parser.add_argument("--train-batch-size", type=int, default=8)
+    parser.add_argument("--val-batch-size", type=int, default=16)
+    parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--temperature", type=float, default=0.8)
     parser.add_argument("--top-p", type=float, default=0.95)
     parser.add_argument("--learning-rate", type=float, default=1e-6)
