@@ -18,8 +18,10 @@ class ActorCriticLLM(nn.Module):
     def __init__(self, model) -> None:
         super().__init__()
         self.model = model
-        head_device = next(self.model.parameters()).device
-        self.value_head = nn.Linear(model.config.hidden_size, 1).to(head_device)
+        model_param = next(self.model.parameters())
+        head_device = model_param.device
+        head_dtype = model_param.dtype
+        self.value_head = nn.Linear(model.config.hidden_size, 1).to(device=head_device, dtype=head_dtype)
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None = None) -> torch.Tensor:
         """
@@ -34,8 +36,10 @@ class ActorCriticLLM(nn.Module):
         if outputs.hidden_states is None:
             raise RuntimeError("Failed to retrieve hidden states from the actor model.")
         last_hidden_state = outputs.hidden_states[-1]         # [B, T, H]
-        if last_hidden_state.device != self.value_head.weight.device:
-            self.value_head = self.value_head.to(last_hidden_state.device)
+        head_device = self.value_head.weight.device
+        head_dtype = self.value_head.weight.dtype
+        if last_hidden_state.device != head_device or last_hidden_state.dtype != head_dtype:
+            last_hidden_state = last_hidden_state.to(device=head_device, dtype=head_dtype)
         values = self.value_head(last_hidden_state).squeeze(-1)  # [B, T]
         return values
 
