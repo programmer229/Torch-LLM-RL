@@ -15,6 +15,7 @@ from SimpleTorchLLMRL import (
     RouterDataConfig,
     RouterGenerationConfig,
     RouterRewardConfig,
+    RouterToolConfig,
     RouterTrainerConfig,
     RouterTrainingConfig,
     RouterValidationConfig,
@@ -23,9 +24,34 @@ from SimpleTorchLLMRL import (
 from SimpleTorchLLMRL.dataset.dataset import Dataset
 
 SYSTEM_PROMPT = (
-    "You are Router-R1, an expert math problem solver. You must use <think> to reason, "
-    "optionally issue <search> queries, record retrieved facts with <information>, "
-    "and provide exactly one final <answer>."
+    "Answer the given question.\n"
+    "Every time you receive new information, you must first conduct reasoning inside <think> ... </think>.\n"
+    "After reasoning, if you find you lack some knowledge, you can call a specialized LLM by writing a query inside <search> LLM-Name:Your-Query </search>.\n"
+    "\n"
+    "!!! STRICT FORMAT RULES for <search>: !!!\n"
+    "    + You MUST replace LLM-Name with the EXACT name of a model selected from [qwen2.5].\n"
+    "    + You MUST replace Your-Query with a CONCRETE QUESTION that helps answer the original question below.\n"
+    "    + NEVER copy or paste model descriptions into <search>.\n"
+    "    + NEVER output the placeholder format <search> LLM-Name:Your-Query </search>. Always replace both parts correctly.\n"
+    "\n"
+    "Before each LLM call, you MUST explicitly reason inside <think> ... </think> about:\n"
+    "    + Why external information is needed.\n"
+    "    + Which model is best suited for answering it, based on the LLMs' abilities (described below).\n"
+    "\n"
+    "When you call an LLM, the response will be returned between <information> and </information>.\n"
+    "Only qwen2.5 is available in the routing pool, so you must never reference any other model name.\n"
+    "Call it whenever additional context is needed, and do not fabricate alternative specialists.\n"
+    "\n"
+    "#### The Descriptions of Each LLM\n"
+    "\n"
+    "qwen2.5:\n"
+    "qwen2.5 is a strong reasoning specialist focused on step-by-step analysis. Use it as the go-to tool for multi-step analysis and factual synthesis in this setup.\n"
+    "\n"
+    "If you find that no further external knowledge is needed, you can directly provide your final answer inside <answer> ... </answer>, without additional explanation or illustration.\n"
+    "For example: <answer> Beijing </answer>.\n"
+    "    + Important: You must not output the placeholder text \"<answer> and </answer>\" alone.\n"
+    "    + You must insert your actual answer between <answer> and </answer>, following the correct format.\n"
+    "Question: {question}\n"
 )
 
 
@@ -68,6 +94,12 @@ def parse_args() -> argparse.Namespace:
                         help="Print a sample of model completions each training step")
     parser.add_argument("--log-train-completions-file", default=None,
                         help="Optional path to append train completions for offline inspection")
+    parser.add_argument("--tool-model", default="Qwen/Qwen2.5-7B-Instruct",
+                        help="Model identifier for the routing tool (defaults to Qwen2.5)")
+    parser.add_argument("--tool-device-map", default="auto",
+                        help="Device map passed to AutoModel for the routing tool")
+    parser.add_argument("--tool-dtype", default=None,
+                        help="Optional torch dtype for the routing tool (e.g. float16, bfloat16)")
     return parser.parse_args()
 
 
@@ -148,6 +180,13 @@ def main() -> None:
             max_new_tokens=args.max_new_tokens,
             temperature=args.temperature,
             top_p=args.top_p,
+        ),
+        tool=RouterToolConfig(
+            enabled=True,
+            tool_name="qwen2.5",
+            model_id=args.tool_model,
+            device_map=args.tool_device_map,
+            torch_dtype=args.tool_dtype,
         ),
         reward=RouterRewardConfig(reward_metric="em", cost_coefficient=0.0),
         trainer=RouterTrainerConfig(

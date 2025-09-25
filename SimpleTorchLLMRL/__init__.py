@@ -1,6 +1,7 @@
 from .router_r1.config import (
     RouterDataConfig,
     RouterGenerationConfig,
+    RouterToolConfig,
     RouterRewardConfig,
     RouterTrainerConfig,
     RouterTrainingConfig,
@@ -13,6 +14,7 @@ from .router_r1.trainer import RouterR1Trainer
 __all__ = [
     "RouterDataConfig",
     "RouterGenerationConfig",
+    "RouterToolConfig",
     "RouterRewardConfig",
     "RouterTrainerConfig",
     "RouterTrainingConfig",

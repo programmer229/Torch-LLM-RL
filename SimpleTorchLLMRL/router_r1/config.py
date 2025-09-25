@@ -24,6 +24,27 @@ class RouterGenerationConfig:
     temperature: float = 0.7
     top_p: float = 0.95
     do_sample: bool = True
+    max_turns: int = 4
+    max_tool_invocations: int = 4
+
+
+@dataclass
+class RouterToolConfig:
+    """Configuration for the single routing tool (Qwen2.5 by default)."""
+
+    enabled: bool = True
+    tool_name: str = "qwen2.5"
+    model_id: str = "Qwen/Qwen2.5-7B-Instruct"
+    system_prompt: Optional[str] = (
+        "You are Qwen 2.5 acting as a specialist tool. "
+        "Answer the provided sub-question concisely and factually."
+    )
+    max_new_tokens: int = 512
+    temperature: float = 0.7
+    top_p: float = 0.95
+    do_sample: bool = False
+    device_map: Optional[str] = "auto"
+    torch_dtype: Optional[str] = None
 
 
 @dataclass
@@ -75,3 +96,4 @@ class RouterTrainingConfig:
     trainer: RouterTrainerConfig = field(default_factory=RouterTrainerConfig)
     reward: RouterRewardConfig = field(default_factory=RouterRewardConfig)
     validation: RouterValidationConfig = field(default_factory=RouterValidationConfig)
+    tool: RouterToolConfig = field(default_factory=RouterToolConfig)

@@ -53,6 +53,7 @@ class RouterR1Trainer:
             tokenizer=self.tokenizer,
             data_config=config.data,
             generation_config=config.generation,
+            tool_config=config.tool,
         )
         self.reward_fn = reward_fn or RouterReward(
             reward_metric=config.reward.reward_metric,
