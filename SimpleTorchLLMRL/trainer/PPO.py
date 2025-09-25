@@ -24,8 +24,15 @@ class ActorCriticLLM(nn.Module):
         """
         Returns values of shape [B, T] corresponding to each token position.
         """
-        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, return_dict=True)
-        last_hidden_state = outputs.last_hidden_state         # [B, T, H]
+        outputs = self.model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            return_dict=True,
+            output_hidden_states=True,
+        )
+        if outputs.hidden_states is None:
+            raise RuntimeError("Failed to retrieve hidden states from the actor model.")
+        last_hidden_state = outputs.hidden_states[-1]         # [B, T, H]
         values = self.value_head(last_hidden_state).squeeze(-1)  # [B, T]
         return values
 
