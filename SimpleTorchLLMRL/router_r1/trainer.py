@@ -169,10 +169,8 @@ class RouterR1Trainer:
             return
 
         max_examples = 3
-        max_chars = 400
         for idx, completion in enumerate(completions[:max_examples]):
-            snippet = completion if len(completion) <= max_chars else completion[:max_chars] + "…"
-            print(f"[TRAIN] completion[{idx}]: {snippet}")
+            print(f"[TRAIN] completion[{idx}]:\n{completion}\n---")
 
         file_path = self.config.trainer.log_train_completions_file
         if file_path:
