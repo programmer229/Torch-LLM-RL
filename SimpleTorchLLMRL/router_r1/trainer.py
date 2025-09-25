@@ -170,7 +170,9 @@ class RouterR1Trainer:
 
         max_examples = 3
         for idx, completion in enumerate(completions[:max_examples]):
-            print(f"[TRAIN] completion[{idx}]:\n{completion}\n---")
+            tag = f"completion[{idx}]"
+            print(f"[TRAIN] {tag}:\n{completion}\n---")
+            self.tracking.log_text(name=f"train/{tag}", text=completion, step=self.global_step)
 
         file_path = self.config.trainer.log_train_completions_file
         if file_path:

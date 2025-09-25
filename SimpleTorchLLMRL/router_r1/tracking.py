@@ -9,6 +9,9 @@ class _ConsoleLogger:
         formatted = ", ".join(f"{key}={value:.4f}" for key, value in sorted(data.items()))
         print(f"[step={step}] {formatted}")
 
+    def log_text(self, name: str, text: str, step: int) -> None:
+        print(f"[step={step}] {name}:\n{text}")
+
 
 @dataclass
 class Tracking:
@@ -52,3 +55,23 @@ class Tracking:
                 logger.log(data=data, step=step)
             else:
                 logger.log(data=data, step=step)
+
+    def log_text(self, name: str, text: str, step: int, *, backend: Optional[str] = None) -> None:
+        if backend:
+            targets = [backend]
+        else:
+            targets = list(self._loggers.keys())
+
+        for target in targets:
+            logger = self._loggers.get(target)
+            if not logger:
+                continue
+            if target == "wandb":  # pragma: no cover - optional dependency branch
+                try:
+                    import wandb  # type: ignore
+
+                    logger.log({name: wandb.Html(text.replace("\n", "<br/>"))}, step=step)
+                except Exception as exc:
+                    print(f"[WARN] wandb text logging failed for '{name}': {exc}")
+            else:
+                logger.log_text(name=name, text=text, step=step)
